@@ -4,7 +4,7 @@ export interface ApiOptions {
   token?: string | null;
 }
 
-async function request(path: string, opts: ApiOptions = {}) {
+async function request(path: string, opts: ApiOptions = {}, retried = false) {
   const { method = "GET", body, token } = opts;
   const headers: Record<string, string> = {
     Accept: "application/json",
@@ -29,6 +29,28 @@ async function request(path: string, opts: ApiOptions = {}) {
 
   const text = await res.text();
   const data = text ? JSON.parse(text) : null;
+  if (res.status === 401 && !retried && typeof window !== "undefined") {
+    const storedAuth = localStorage.getItem("aaas.auth");
+    if (storedAuth) {
+      try {
+        const { refresh } = JSON.parse(storedAuth);
+        const refreshResponse = await fetch("/api/token/refresh/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ refresh }),
+          credentials: "same-origin",
+        });
+        if (refreshResponse.ok) {
+          const refreshed = await refreshResponse.json();
+          localStorage.setItem("aaas.token", refreshed.access);
+          localStorage.setItem("aaas.auth", JSON.stringify({ access: refreshed.access, refresh }));
+          return request(path, { ...opts, token: refreshed.access }, true);
+        }
+      } catch {
+        // Fall through to the original authentication error.
+      }
+    }
+  }
   if (!res.ok) {
     const err = new Error(data?.detail || res.statusText || "Request failed");
     // @ts-ignore

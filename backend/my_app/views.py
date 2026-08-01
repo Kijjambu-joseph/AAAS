@@ -1,5 +1,6 @@
 from rest_framework import filters, status, viewsets
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Branch, Auctioneer, RecoveryCase, Allocation, Notification, BankUser
@@ -86,3 +87,10 @@ class BankUserViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["username", "employee_number", "first_name", "last_name"]
     ordering_fields = ["employee_number", "last_name", "role"]
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def current_user(request):
+    """Return the authenticated user's database-backed role and profile."""
+    return Response(BankUserSerializer(request.user).data)

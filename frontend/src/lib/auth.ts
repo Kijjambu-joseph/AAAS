@@ -33,7 +33,7 @@ export async function login(username: string, password: string) {
     body: JSON.stringify({ username, password }),
     credentials: "same-origin",
   });
-  if (!res.ok) throw new Error("Login failed");
+  if (!res.ok) throw new Error("Invalid employee ID or password");
   const data = await res.json();
   setToken(data.access, data.refresh);
   return data;

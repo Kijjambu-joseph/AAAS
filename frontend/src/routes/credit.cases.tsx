@@ -151,10 +151,27 @@ function CaseRegistry() {
   const [openingDetails, setOpeningDetails] = useState(false);
   const [selectedAuctioneer, setSelectedAuctioneer] = useState<any | null>(null);
   const [allocating, setAllocating] = useState(false);
+  const [branches, setBranches] = useState<any[]>([]);
+  const [creatingCase, setCreatingCase] = useState(false);
+  const [caseData, setCaseData] = useState({
+    customer_name: "",
+    national_id: "",
+    loan_account_number: "",
+    outstanding_balance: "",
+    arrears_days: "",
+    collateral_type: "Land",
+    collateral_description: "",
+    branch_id: "",
+  });
 
   // Fetch cases on mount
   useEffect(() => {
     fetchCases();
+    Api.get("/api/branches/").then((data: any) => {
+      const items = data.results ?? data;
+      setBranches(items);
+      if (items[0]) setCaseData((current) => ({ ...current, branch_id: String(items[0].id) }));
+    }).catch(() => toast.error("Failed to load branches"));
   }, []);
 
   async function fetchCases() {
@@ -217,21 +234,51 @@ function CaseRegistry() {
     }
   }
 
+  async function createCase() {
+    if (!caseData.customer_name || !caseData.national_id || !caseData.loan_account_number || !caseData.outstanding_balance || !caseData.branch_id) {
+      toast.error("Complete all required case details");
+      return;
+    }
+
+    try {
+      setCreatingCase(true);
+      await Api.post("/api/cases/", {
+        ...caseData,
+        case_number: `REC-${Date.now()}`,
+        branch_id: Number(caseData.branch_id),
+        phone_number: "Not provided",
+        loan_amount: caseData.outstanding_balance,
+        collateral_location: "Not provided",
+        priority: "Medium",
+        status: "Pending",
+        recovery_stage: "Demand Notice",
+      });
+      toast.success("Recovery case registered successfully");
+      setCaseFormOpen(false);
+      setCaseData({ customer_name: "", national_id: "", loan_account_number: "", outstanding_balance: "", arrears_days: "", collateral_type: "Land", collateral_description: "", branch_id: branches[0] ? String(branches[0].id) : "" });
+      await fetchCases();
+    } catch (error: any) {
+      toast.error(error.data?.detail || "Failed to register case");
+    } finally {
+      setCreatingCase(false);
+    }
+  }
+
   // Transform API cases to table row format
   const rows = cases.map((c: any) => ({
     id: c.id,
     case_number: c.case_number,
-    name: c.borrower_name,
-    idLine: `ID: ${c.borrower_id} | ${c.customer_type || "Individual"}`,
-    branch: c.branch?.name || "Unknown Branch",
-    dpd: Math.floor((new Date().getTime() - new Date(c.created_at).getTime()) / (1000 * 60 * 60 * 24)),
+    name: c.customer_name,
+    idLine: `ID: ${c.national_id}`,
+    branch: c.branch?.branch_name || "Unknown Branch",
+    dpd: c.arrears_days,
     dpdClass: "bg-error-container text-on-error-container",
-    outstanding: c.outstanding_principal?.toLocaleString() || "N/A",
-    collateralIcon: c.collateral_type === "land" ? "landscape" : c.collateral_type === "vehicle" ? "directions_car" : "home",
+    outstanding: Number(c.outstanding_balance || 0).toLocaleString(),
+    collateralIcon: c.collateral_type === "Land" ? "landscape" : c.collateral_type === "Motor Vehicle" ? "directions_car" : "home",
     collateral: c.collateral_description || "Not specified",
     compliance: 2,
-    status: c.status === "allocated" ? "Allocated" : c.status === "submitted" ? "Submitted" : "Draft",
-    statusClass: c.status === "allocated" ? "bg-[#dcfce7] text-[#166534]" : c.status === "submitted" ? "bg-primary-fixed text-on-primary-fixed-variant" : "bg-surface-container-high text-on-surface-variant",
+    status: c.status,
+    statusClass: c.status === "Allocated" ? "bg-[#dcfce7] text-[#166534]" : c.status === "Pending" ? "bg-primary-fixed text-on-primary-fixed-variant" : "bg-surface-container-high text-on-surface-variant",
     allocation: c.allocation,
   }));
 
@@ -247,6 +294,9 @@ function CaseRegistry() {
     const matchesBranch = branchFilter === "all" || row.branch === branchFilter;
     return matchesStatus && matchesCollateral && matchesBranch;
   });
+
+  const selectedRow = rows.find((row) => row.id === selectedCaseId) ?? null;
+  const selectedAuctioneerDetails = allocationDetails?.auctioneer ?? allocationDetails;
 
   function downloadCSV(filename: string, data: any[]) {
     const headers = ["Case ID", "Borrower", "Branch", "Turn Around Time", "Outstanding", "Collateral", "Status"];
@@ -337,16 +387,18 @@ function CaseRegistry() {
               All Filters
             </button>
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-surface-container-lowest border border-outline-variant rounded px-4 py-2 text-body-sm font-medium focus:ring-primary focus:border-primary">
-              <option>Status: All</option>
-              <option>Status: Draft</option>
-              <option>Status: Submitted</option>
-              <option>Status: Allocated</option>
+              <option value="all">Status: All</option>
+              <option value="pending">Status: Pending</option>
+              <option value="allocated">Status: Allocated</option>
+              <option value="in recovery">Status: In Recovery</option>
+              <option value="recovered">Status: Recovered</option>
+              <option value="closed">Status: Closed</option>
             </select>
             <select value={collateralFilter} onChange={(e) => setCollateralFilter(e.target.value)} className="bg-surface-container-lowest border border-outline-variant rounded px-4 py-2 text-body-sm font-medium focus:ring-primary focus:border-primary">
-              <option>Collateral: Any</option>
-              <option>Collateral: Land</option>
-              <option>Collateral: Vehicle</option>
-              <option>Collateral: Commercial</option>
+              <option value="all">Collateral: Any</option>
+              <option value="land">Collateral: Land</option>
+              <option value="vehicle">Collateral: Vehicle</option>
+              <option value="commercial">Collateral: Commercial</option>
             </select>
             <select value={branchFilter} onChange={(e) => setBranchFilter(e.target.value)} className="bg-surface-container-lowest border border-outline-variant rounded px-4 py-2 text-body-sm font-medium focus:ring-primary focus:border-primary">
               <option value="all">Branch: All</option>
@@ -357,7 +409,7 @@ function CaseRegistry() {
             </select>
           </div>
           <div className="text-body-sm text-on-surface-variant">
-            Showing <b>25</b> of <b>142</b> cases
+            Showing <b>{filteredRows.length}</b> of <b>{rows.length}</b> cases
           </div>
         </div>
 
@@ -463,14 +515,15 @@ function CaseRegistry() {
             <div>
               <h3 className="text-headline-sm text-primary">Auctioneer Details</h3>
               <p className="text-body-sm text-on-surface-variant">
-                {selectedRow?.auctioneerFirm ?? (selectedRow?.status === "Allocated" ? "No auctioneer assigned" : "Not Allocated")}
+                {selectedAuctioneerDetails?.company_name ?? (selectedRow?.status === "Allocated" ? "No auctioneer assigned" : "Not Allocated")}
               </p>
             </div>
             <button
               className="rounded-full p-2 hover:bg-surface-container"
               onClick={() => {
                 setPanelOpen(false);
-                setSelectedRow(null);
+                setSelectedCaseId(null);
+                setAllocationDetails(null);
               }}
             >
               <Icon name="close" />
@@ -481,11 +534,11 @@ function CaseRegistry() {
             <div className="rounded-lg bg-surface-container-low p-md">
               <div className="flex items-center gap-md">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-lg font-bold text-on-primary">
-                  {(selectedRow?.auctioneerName ?? "AU").slice(0, 2).toUpperCase()}
+                  {(selectedAuctioneerDetails?.contact_person ?? "AU").slice(0, 2).toUpperCase()}
                 </div>
                 <div>
                   <p className="text-label-bold text-primary">
-                    {selectedRow?.auctioneerName ?? (selectedRow?.status === "Allocated" ? "No auctioneer assigned" : "Not Allocated")}
+                    {selectedAuctioneerDetails?.contact_person ?? (selectedRow?.status === "Allocated" ? "No auctioneer assigned" : "Not Allocated")}
                   </p>
                   <p className="text-body-sm">
                     {selectedRow?.status === "Allocated" ? "Allocated Auctioneer" : "Not Allocated"}
@@ -497,17 +550,17 @@ function CaseRegistry() {
             <div className="grid grid-cols-2 gap-md">
               <div className="rounded-lg border border-outline-variant p-md">
                 <p className="text-[10px] font-bold uppercase text-outline">License ID</p>
-                <p className="text-mono-data">{selectedRow?.auctioneerLicense ?? "N/A"}</p>
+                <p className="text-mono-data">{selectedAuctioneerDetails?.license_number ?? "N/A"}</p>
               </div>
               <div className="rounded-lg border border-outline-variant p-md">
                 <p className="text-[10px] font-bold uppercase text-outline">Allocated On</p>
-                <p className="text-mono-data">{selectedRow?.allocationDate ?? "N/A"}</p>
+                <p className="text-mono-data">{allocationDetails?.allocated_at ? new Date(allocationDetails.allocated_at).toLocaleDateString() : "N/A"}</p>
               </div>
             </div>
 
             <div className="rounded-lg border border-outline-variant p-md">
               <p className="text-[10px] font-bold uppercase text-outline">Contact</p>
-              <p className="text-mono-data">{selectedRow?.auctioneerPhone ?? "N/A"}</p>
+              <p className="text-mono-data">{selectedAuctioneerDetails?.phone_number ?? "N/A"}</p>
             </div>
 
             <div>
@@ -584,11 +637,8 @@ function CaseRegistry() {
               Cancel
             </button>
             <div className="flex gap-2">
-              <button className="px-md py-2 border border-outline-variant rounded-lg text-on-surface text-label-bold hover:bg-surface transition-colors">
-                Save as Draft
-              </button>
-              <button className="px-md py-2 bg-primary text-on-primary rounded-lg text-label-bold hover:bg-primary-container transition-colors shadow-md">
-                Create & Submit
+              <button className="px-md py-2 bg-primary text-on-primary rounded-lg text-label-bold hover:bg-primary-container transition-colors shadow-md" onClick={createCase} disabled={creatingCase}>
+                {creatingCase ? "Registering..." : "Register Case"}
               </button>
             </div>
           </div>
@@ -597,49 +647,49 @@ function CaseRegistry() {
         <div className="space-y-4">
           <div>
             <label className="text-label-bold text-on-surface block mb-2">Borrower Name</label>
-            <input type="text" className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Full legal name" />
+            <input value={caseData.customer_name} onChange={(e) => setCaseData({ ...caseData, customer_name: e.target.value })} type="text" className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Full legal name" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-label-bold text-on-surface block mb-2">National ID / Registration</label>
-              <input type="text" className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="ID number" />
+              <input value={caseData.national_id} onChange={(e) => setCaseData({ ...caseData, national_id: e.target.value })} type="text" className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="ID number" />
             </div>
             <div>
-              <label className="text-label-bold text-on-surface block mb-2">Borrower Type</label>
-              <select className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent">
-                <option>Individual</option>
-                <option>Corporate</option>
-                <option>SME</option>
+              <label className="text-label-bold text-on-surface block mb-2">Branch</label>
+              <select value={caseData.branch_id} onChange={(e) => setCaseData({ ...caseData, branch_id: e.target.value })} className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent">
+                <option value="">Select branch</option>
+                {branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.branch_name}</option>)}
               </select>
             </div>
           </div>
           <div>
             <label className="text-label-bold text-on-surface block mb-2">Loan ID</label>
-            <input type="text" className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="e.g., LOAN-2024-001234" />
+            <input value={caseData.loan_account_number} onChange={(e) => setCaseData({ ...caseData, loan_account_number: e.target.value })} type="text" className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="e.g., LOAN-2024-001234" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-label-bold text-on-surface block mb-2">Outstanding Principal (UGX)</label>
-              <input type="number" className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="0" />
+              <input value={caseData.outstanding_balance} onChange={(e) => setCaseData({ ...caseData, outstanding_balance: e.target.value })} type="number" className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="0" />
             </div>
             <div>
               <label className="text-label-bold text-on-surface block mb-2">Turn Around Time (Days)</label>
-              <input type="number" className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="0" />
+              <input value={caseData.arrears_days} onChange={(e) => setCaseData({ ...caseData, arrears_days: e.target.value })} type="number" className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="0" />
             </div>
           </div>
           <div>
             <label className="text-label-bold text-on-surface block mb-2">Collateral Type</label>
-            <select className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent">
-              <option>Land & Buildings</option>
-              <option>Motor Vehicles</option>
-              <option>Plant & Machinery</option>
-              <option>Commercial Stock</option>
-              <option>Securities & Bonds</option>
+            <select value={caseData.collateral_type} onChange={(e) => setCaseData({ ...caseData, collateral_type: e.target.value })} className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent">
+              <option value="Land">Land</option>
+              <option value="Motor Vehicle">Motor Vehicle</option>
+              <option value="Building">Building</option>
+              <option value="Machinery">Machinery</option>
+              <option value="Household Property">Household Property</option>
+              <option value="Other">Other</option>
             </select>
           </div>
           <div>
             <label className="text-label-bold text-on-surface block mb-2">Collateral Description</label>
-            <textarea className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent" rows={3} placeholder="Details about the collateral..." />
+            <textarea value={caseData.collateral_description} onChange={(e) => setCaseData({ ...caseData, collateral_description: e.target.value })} className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent" rows={3} placeholder="Details about the collateral..." />
           </div>
           <div>
             <label className="text-label-bold text-on-surface block mb-2">Attach Documents</label>

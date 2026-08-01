@@ -1,3 +1,4 @@
+from django.urls import path
 from rest_framework.routers import DefaultRouter
 from .views import (
     BranchViewSet,
@@ -6,6 +7,7 @@ from .views import (
     AllocationViewSet,
     NotificationViewSet,
     BankUserViewSet,
+    current_user,
 )
 
 router = DefaultRouter()
@@ -17,3 +19,4 @@ router.register(r"notifications", NotificationViewSet, basename="notification")
 router.register(r"users", BankUserViewSet, basename="user")
 
 urlpatterns = router.urls
+urlpatterns += [path("auth/me/", current_user, name="current-user")]

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { BrandLogo, Icon } from "@/components/AppShell";
-import { DEFAULT_USERS, ROLE_HOME, ROLE_LABEL, writeSession, type Role } from "@/lib/session";
+import { login } from "@/lib/auth";
+import { ROLE_HOME, sessionUserFromDatabase, writeSession } from "@/lib/session";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -22,20 +23,27 @@ export const Route = createFileRoute("/")({
   component: LoginPage,
 });
 
-const ROLES: Role[] = ["super-admin", "credit-officer", "loan-officer"];
-
 function LoginPage() {
   const navigate = useNavigate();
-  const [role, setRole] = useState<Role>("super-admin");
+  const [employeeId, setEmployeeId] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const signIn = (e: React.FormEvent) => {
+  const signIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      writeSession(DEFAULT_USERS[role]);
-      navigate({ to: ROLE_HOME[role] });
-    }, 700);
+    setError("");
+    try {
+      const response = await login(employeeId, password);
+      const user = sessionUserFromDatabase(response.user);
+      writeSession(user);
+      navigate({ to: ROLE_HOME[user.role] });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to sign in");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -81,7 +89,8 @@ function LoginPage() {
                 />
                 <input
                   id="employee_id"
-                  defaultValue="EMP-004821"
+                  value={employeeId}
+                  onChange={(e) => setEmployeeId(e.target.value)}
                   className="w-full rounded-[10px] border border-outline-variant bg-surface-container py-md pl-13 pr-md text-body-md text-on-surface outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary"
                   placeholder="EMP-000000"
                 />
@@ -104,7 +113,8 @@ function LoginPage() {
                 <input
                   id="password"
                   type="password"
-                  defaultValue="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full rounded-[10px] border border-outline-variant bg-surface-container py-md pl-13 pr-md text-body-md text-on-surface outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary"
                   placeholder="••••••••••••"
                 />
@@ -116,25 +126,9 @@ function LoginPage() {
                 
             </div>
 
-            <div className="space-y-xs">
-              <span className="text-label-bold text-on-surface-variant">ACCESS ROLE</span>
-              <div className="grid grid-cols-3 gap-sm">
-                {ROLES.map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => setRole(r)}
-                    className={
-                      r === role
-                        ? "rounded-[10px] border border-primary bg-primary px-2 py-3 text-label-bold text-on-primary"
-                        : "rounded-[10px] border border-outline-variant bg-surface-container px-2 py-3 text-label-bold text-on-surface-variant transition-colors hover:border-primary"
-                    }
-                  >
-                    {ROLE_LABEL[r]}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <p className="text-body-sm text-on-surface-variant">Your access role is assigned securely from your account.</p>
+
+            {error && <p className="rounded-md bg-error-container px-3 py-2 text-body-sm text-on-error-container">{error}</p>}
 
             
 

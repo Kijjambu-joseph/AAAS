@@ -464,7 +464,8 @@ class AuditLog(models.Model):
 class BankUser(AbstractUser):
     ROLE_CHOICES = [
         ('LOAN_OFFICER', 'Loan Officer'),
-        ('CREDIT_ADMIN', 'Credit Administrator'),
+        ('CREDIT_OFFICER', 'Credit Officer'),
+        ('SUPER_ADMIN', 'Super Admin'),
     ]
 
     employee_number = models.CharField(max_length=20, unique=True)

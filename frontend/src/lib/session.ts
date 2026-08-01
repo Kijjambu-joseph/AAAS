@@ -7,6 +7,25 @@ export interface SessionUser {
   avatar: string;
 }
 
+export type DatabaseUser = {
+  username: string;
+  first_name: string;
+  last_name: string;
+  role: "SUPER_ADMIN" | "CREDIT_OFFICER" | "LOAN_OFFICER";
+};
+
+const DATABASE_ROLE_MAP: Record<DatabaseUser["role"], Role> = {
+  SUPER_ADMIN: "super-admin",
+  CREDIT_OFFICER: "credit-officer",
+  LOAN_OFFICER: "loan-officer",
+};
+
+export function sessionUserFromDatabase(user: DatabaseUser): SessionUser {
+  const name = `${user.first_name} ${user.last_name}`.trim() || user.username;
+  const role = DATABASE_ROLE_MAP[user.role];
+  return { role, name, title: ROLE_LABEL[role], avatar: AVATAR };
+}
+
 export const ROLE_LABEL: Record<Role, string> = {
   "super-admin": "Super Admin",
   "credit-officer": "Credit Officer",
@@ -46,7 +65,7 @@ export interface NavItem {
 export const ROLE_NAV: Record<Role, NavItem[]> = {
   "super-admin": [
     { label: "Dashboard", icon: "dashboard", to: "/admin" },
-    { label: "Case Registry", icon: "inventory_2", to: "/admin/cases" },
+    { label: "Case Registry", icon: "inventory_2", to: "/credit/cases" },
     { label: "Auctioneer Panel", icon: "gavel", to: "/admin/auctioneers" },
     { label: "Allocation Queue", icon: "queue", to: "/admin/allocation" },
     { label: "Transaction Limits", icon: "account_balance", to: "/admin/transaction-limits" },
@@ -61,7 +80,7 @@ export const ROLE_NAV: Record<Role, NavItem[]> = {
   "loan-officer": [
     { label: "Dashboard", icon: "dashboard", to: "/officer" },
     { label: "My Workspace", icon: "work", to: "/officer/workspace" },
-    { label: "Case Progress", icon: "folder_open", to: "/officer/cases" },
+    { label: "Case Registry", icon: "inventory_2", to: "/credit/cases" },
   ],
 };
 
