@@ -1,0 +1,1 @@
+import{o as e}from"./index-DJ6MIvL9.js";import{t}from"./SettingsPage-DQe6kD4T.js";var n=e(),r=()=>(0,n.jsx)(t,{role:`loan-officer`});export{r as component};

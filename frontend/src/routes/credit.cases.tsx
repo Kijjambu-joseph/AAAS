@@ -34,96 +34,6 @@ export const Route = createFileRoute("/credit/cases")({
   }),
 });
 
-const kpis = [
-  { label: "TOTAL ACTIVE CASES", icon: "folder_shared", value: "142", tag: "+5%", tagClass: "text-secondary", note: "Active recovery operations" },
-  { label: "PENDING ALLOCATION", icon: "pending_actions", value: "28", tag: "Critical", tagClass: "text-error", note: "Awaiting legal review" },
-  { label: "AVG. DPD", icon: "schedule", value: "184d", tag: "-12d", tagClass: "text-secondary-fixed-dim", note: "Across all portfolio segments" },
-  { label: "RECOVERY VALUE", icon: "payments", value: "UGX 4.2B", tag: "In Process", tagClass: "text-secondary", note: "Total outstanding principal" },
-];
-
-const rows = [
-  {
-    id: "#LR-2024-0012",
-    name: "Musa K. Walusimbi",
-    idLine: "ID: 100928374 | Corporate",
-    branch: "Kampala Regional Branch",
-    dpd: 214,
-    dpdClass: "bg-error-container text-on-error-container",
-    outstanding: "850,000,000",
-    collateralIcon: "landscape",
-    collateral: "Commercial Land",
-    compliance: 3,
-    status: "Allocated",
-    statusClass: "bg-[#dcfce7] text-[#166534]",
-    auctioneerName: "M. K. Ssekandi",
-    auctioneerFirm: "Kampala Asset Recovery Ltd",
-    auctioneerLicense: "AUC-2023-44102",
-    auctioneerPhone: "+256 700 123 456",
-    allocationDate: "24 Oct 2023",
-  },
-  {
-    id: "#LR-2024-0015",
-    name: "Sarah Namulondo",
-    idLine: "ID: 211093345 | Individual",
-    branch: "Entebbe Head Office",
-    dpd: 92,
-    dpdClass: "bg-secondary-fixed text-on-secondary-container",
-    outstanding: "42,500,000",
-    collateralIcon: "directions_car",
-    collateral: "Logbook: Toyota Prado",
-    compliance: 2,
-    status: "Draft",
-    statusClass: "bg-surface-container-high text-on-surface-variant",
-  },
-  {
-    id: "#LR-2024-0018",
-    name: "Jubilee Agri-Trade Ltd",
-    idLine: "ID: 887221094 | SME",
-    branch: "Jinja Operations",
-    dpd: 184,
-    dpdClass: "bg-error-container text-on-error-container",
-    outstanding: "1,240,000,000",
-    collateralIcon: "factory",
-    collateral: "Plant & Machinery",
-    compliance: 3,
-    status: "Submitted",
-    statusClass: "bg-primary-fixed text-on-primary-fixed-variant",
-  },
-  {
-    id: "#LR-2024-0021",
-    name: "Ocen Emmanuel",
-    idLine: "ID: 554302911 | Individual",
-    branch: "Mbarara Center",
-    dpd: 105,
-    dpdClass: "bg-secondary-fixed text-on-secondary-container",
-    outstanding: "128,400,000",
-    collateralIcon: "home",
-    collateral: "Residential House",
-    compliance: 1,
-    status: "Draft",
-    statusClass: "bg-surface-container-high text-on-surface-variant",
-  },
-  {
-    id: "#LR-2024-0022",
-    name: "Greenways Logistics",
-    idLine: "ID: 991827364 | Corporate",
-    branch: "Kampala Regional Branch",
-    dpd: 256,
-    dpdClass: "bg-error-container text-on-error-container",
-    outstanding: "2,100,000,000",
-    collateralIcon: "local_shipping",
-    collateral: "Heavy Duty Fleet",
-    compliance: 3,
-    status: "Allocated",
-    statusClass: "bg-[#dcfce7] text-[#166534]",
-    auctioneerName: "A. N. Katongole",
-    auctioneerFirm: "Victoria Asset Recovery",
-    auctioneerLicense: "AUC-2023-11928",
-    auctioneerPhone: "+256 701 444 888",
-    allocationDate: "22 Oct 2023",
-  },
-];
-
 // function ComplianceDots({ count }: { count: number }) {
 //   return (
 //     <div className="flex justify-center gap-1">
@@ -297,6 +207,16 @@ function CaseRegistry() {
 
   const selectedRow = rows.find((row) => row.id === selectedCaseId) ?? null;
   const selectedAuctioneerDetails = allocationDetails?.auctioneer ?? allocationDetails;
+  const activeCases = rows.filter((row) => !["Recovered", "Closed", "Cancelled"].includes(row.status));
+  const pendingCases = rows.filter((row) => row.status === "Pending");
+  const averageDpd = activeCases.length ? Math.round(activeCases.reduce((sum, row) => sum + Number(row.dpd || 0), 0) / activeCases.length) : 0;
+  const outstanding = activeCases.reduce((sum, row) => sum + Number(String(row.outstanding).replace(/,/g, "")), 0);
+  const kpis = [
+    { label: "TOTAL ACTIVE CASES", icon: "folder_shared", value: String(activeCases.length), tag: "Live", tagClass: "text-secondary", note: "Active recovery operations" },
+    { label: "PENDING ALLOCATION", icon: "pending_actions", value: String(pendingCases.length), tag: pendingCases.length ? "Action needed" : "Clear", tagClass: pendingCases.length ? "text-error" : "text-secondary", note: "Awaiting auctioneer assignment" },
+    { label: "AVG. DPD", icon: "schedule", value: `${averageDpd}d`, tag: "Live", tagClass: "text-secondary", note: "Across active cases" },
+    { label: "RECOVERY VALUE", icon: "payments", value: `UGX ${outstanding.toLocaleString()}`, tag: "In process", tagClass: "text-secondary", note: "Active outstanding principal" },
+  ];
 
   function downloadCSV(filename: string, data: any[]) {
     const headers = ["Case ID", "Borrower", "Branch", "Turn Around Time", "Outstanding", "Collateral", "Status"];
@@ -402,10 +322,7 @@ function CaseRegistry() {
             </select>
             <select value={branchFilter} onChange={(e) => setBranchFilter(e.target.value)} className="bg-surface-container-lowest border border-outline-variant rounded px-4 py-2 text-body-sm font-medium focus:ring-primary focus:border-primary">
               <option value="all">Branch: All</option>
-              <option value="Kampala Regional Branch">Branch: Kampala Regional Branch</option>
-              <option value="Entebbe Head Office">Branch: Entebbe Head Office</option>
-              <option value="Jinja Operations">Branch: Jinja Operations</option>
-              <option value="Mbarara Center">Branch: Mbarara Center</option>
+              {Array.from(new Set(rows.map((row) => row.branch))).map((branch) => <option key={branch} value={branch}>Branch: {branch}</option>)}
             </select>
           </div>
           <div className="text-body-sm text-on-surface-variant">
@@ -500,7 +417,7 @@ function CaseRegistry() {
               <Icon name="chevron_right" className="text-sm" />
             </button>
           </div>
-          <div className="text-[11px] font-medium text-outline">LAST UPDATED: 24 OCT 2023 14:32:10 EAT</div>
+          <div className="text-[11px] font-medium text-outline">LAST UPDATED: {loading ? "Loading..." : new Date().toLocaleString()}</div>
         </div>
       </div>
 
@@ -608,18 +525,8 @@ function CaseRegistry() {
           <span className="text-label-bold text-primary uppercase">Recent System Activity</span>
         </div>
         <div className="space-y-2">
-          <div className="flex justify-between text-body-sm">
-            <span className="text-on-surface-variant text-mono-data">
-              14:28:11 - User [JMUKASA] initialized new recovery case LR-2024-0025.
-            </span>
-            <span className="text-[10px] text-outline font-medium uppercase">Draft Saved</span>
-          </div>
-          <div className="flex justify-between text-body-sm">
-            <span className="text-on-surface-variant text-mono-data">
-              13:15:04 - Case LR-2024-0012 allocated to auctioneer [KAMPALA ASSET RECOVERY LTD].
-            </span>
-            <span className="text-[10px] text-outline font-medium uppercase">Allocation Confirmed</span>
-          </div>
+          {rows.slice(0, 3).map((row) => <div key={row.id} className="flex justify-between text-body-sm"><span className="text-on-surface-variant text-mono-data">{new Date(cases.find((item) => item.id === row.id)?.created_at).toLocaleString()} - Recovery case {row.case_number} created for {row.name}.</span><span className="text-[10px] text-outline font-medium uppercase">{row.status}</span></div>)}
+          {!loading && !rows.length ? <p className="text-body-sm text-on-surface-variant">No case activity recorded yet.</p> : null}
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-import { n as __toESM } from "../_runtime.mjs";
+import { i as __toESM } from "../_runtime.mjs";
 import { n as require_react } from "./@radix-ui/react-compose-refs+[...].mjs";
 import { r as require_jsx_runtime } from "./@radix-ui/react-label+[...].mjs";
 //#region node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js

@@ -1,1 +1,0 @@
-import{o as e}from"./index-pjCEO_YO.js";import{t}from"./SettingsPage-RI6BrYhM.js";var n=e(),r=()=>(0,n.jsx)(t,{role:`super-admin`});export{r as component};

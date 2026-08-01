@@ -1,1 +1,0 @@
-import{o as e}from"./index-pjCEO_YO.js";import{t}from"./SupportPage-wCoI61GI.js";var n=e(),r=()=>(0,n.jsx)(t,{role:`credit-officer`});export{r as component};
