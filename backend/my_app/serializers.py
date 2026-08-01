@@ -1,3 +1,5 @@
+import json
+
 from rest_framework import serializers
 from .models import AuditLog, Branch, Auctioneer, RecoveryCase, Allocation, Notification, TransactionLimit, BankUser
 
@@ -17,6 +19,16 @@ class BranchSerializer(serializers.ModelSerializer):
         ]
 
 class AuctioneerSerializer(serializers.ModelSerializer):
+    def validate_regions(self, value):
+        if isinstance(value, str):
+            try:
+                value = json.loads(value)
+            except json.JSONDecodeError as error:
+                raise serializers.ValidationError("Regions must be a JSON list.") from error
+        if not isinstance(value, list):
+            raise serializers.ValidationError("Regions must be a list.")
+        return value
+
     class Meta:
         model = Auctioneer
         fields = [
@@ -26,10 +38,14 @@ class AuctioneerSerializer(serializers.ModelSerializer):
             "phone_number",
             "email",
             "license_number",
+            "ura_registration",
             "license_expiry",
             "region",
+            "regions",
             "office_address",
             "current_workload",
+            "maximum_caseload",
+            "license_document",
             "status",
         ]
 

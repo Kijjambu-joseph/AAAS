@@ -97,6 +97,8 @@ class Auctioneer(models.Model):
         unique=True
     )
 
+    ura_registration = models.CharField(max_length=50, blank=True)
+
     license_expiry = models.DateField()
 
     region = models.CharField(
@@ -104,12 +106,18 @@ class Auctioneer(models.Model):
         choices=REGION_CHOICES
     )
 
-    office_address = models.TextField()
+    regions = models.JSONField(default=list, blank=True)
+
+    office_address = models.TextField(blank=True)
 
     current_workload = models.PositiveIntegerField(
         default=0,
         help_text="Current number of active recovery cases."
     )
+
+    maximum_caseload = models.PositiveIntegerField(default=15)
+
+    license_document = models.FileField(upload_to="auctioneer_licenses/", blank=True, null=True)
 
     status = models.BooleanField(
         default=True,

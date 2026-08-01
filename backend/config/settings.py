@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -150,6 +151,14 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
+}
+
+ALLOCATION_CONFIG = {
+    "ENFORCEMENT_MODE": os.getenv("ALLOCATION_ENFORCEMENT_MODE", "balanced"),
+    "ENFORCEMENT_POLICY": os.getenv("ALLOCATION_ENFORCEMENT_POLICY", "enforce_high_priority"),
+    "DEFAULT_STRATEGY": os.getenv("ALLOCATION_DEFAULT_STRATEGY", "automatic"),
+    "HIGH_PRIORITY_LEVELS": ["High", "CRITICAL", "Critical"],
+    "CRITICAL_PRIORITY_LEVELS": ["CRITICAL", "Critical"],
 }
 
 
