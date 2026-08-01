@@ -460,6 +460,24 @@ class AuditLog(models.Model):
         username = self.user.username if self.user else "System"
         return f"{username} - {self.action} - {self.model_name}"
 
+
+class TransactionLimit(models.Model):
+    """Configurable approval thresholds used by the recovery workflow."""
+
+    level = models.CharField(max_length=100, unique=True)
+    minimum = models.DecimalField(max_digits=15, decimal_places=2)
+    maximum = models.DecimalField(max_digits=15, decimal_places=2)
+    approval_required = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["minimum", "level"]
+
+    def __str__(self):
+        return self.level
+
     
 class BankUser(AbstractUser):
     ROLE_CHOICES = [

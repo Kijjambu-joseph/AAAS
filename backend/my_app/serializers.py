@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Branch, Auctioneer, RecoveryCase, Allocation, Notification, BankUser
+from .models import AuditLog, Branch, Auctioneer, RecoveryCase, Allocation, Notification, TransactionLimit, BankUser
 
 class BranchSerializer(serializers.ModelSerializer):
     class Meta:
@@ -113,3 +113,22 @@ class BankUserSerializer(serializers.ModelSerializer):
             "branch",
         ]
         read_only_fields = ["id"]
+
+
+class AuditLogSerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AuditLog
+        fields = ["id", "user", "user_name", "action", "model_name", "object_id", "object_name", "description", "ip_address", "created_at"]
+
+    def get_user_name(self, obj):
+        if not obj.user:
+            return "System"
+        return obj.user.get_full_name() or obj.user.employee_number or obj.user.username
+
+
+class TransactionLimitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TransactionLimit
+        fields = ["id", "level", "minimum", "maximum", "approval_required", "is_active", "created_at", "updated_at"]

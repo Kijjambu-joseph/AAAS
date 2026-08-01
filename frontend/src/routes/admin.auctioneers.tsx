@@ -1,594 +1,64 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { AppShell, Icon } from "@/components/AppShell";
-import { Modal } from "@/components/ui-kit";
+import { useEffect, useState } from "react";
+import { AppShell } from "@/components/AppShell";
+import { Button, Modal } from "@/components/ui-kit";
+import { Api } from "@/lib/api";
 
-export const Route = createFileRoute("/admin/auctioneers")({
-  component: AuctioneerPanel,
-  head: () => ({
-    meta: [
-      { title: "Auctioneer Panel Management | AAAS System" },
-      {
-        name: "description",
-        content:
-          "Manage and allocate asset recovery cases to verified third-party auctioneer partners across Uganda.",
-      },
-      { property: "og:title", content: "Auctioneer Panel Management | AAAS System" },
-      {
-        property: "og:description",
-        content:
-          "Manage and allocate asset recovery cases to verified third-party auctioneer partners across Uganda.",
-      },
-    ],
-  }),
-});
+export const Route = createFileRoute("/admin/auctioneers")({ component: AuctioneerPanel });
+const list = (value: any) => Array.isArray(value) ? value : value?.results ?? [];
 
-type Auctioneer = {
-  name: string;
-  license: string;
-  status: "Valid" | "Expiring Soon" | "Expired";
-  statusClass: string;
-  expiry: string;
-  expiryClass: string;
-  region: string;
-  workload: string;
-  workloadPct: number;
-  workloadColor: string;
-  leadTime: string;
-  success: string;
-  successClass: string;
+const emptyForm = {
+  company_name: "", contact_person: "", phone_number: "", email: "", license_number: "",
+  license_expiry: "", region: "Central", office_address: "", current_workload: 0, status: true,
 };
 
-const auctioneers: Auctioneer[] = [
-  {
-    name: "Quick-Exit Recoveries Ltd",
-    license: "LIC-UG-2024-0012",
-    status: "Valid",
-    statusClass: "bg-green-100 text-green-800",
-    expiry: "Oct 12, 2025",
-    expiryClass: "",
-    region: "Central, Eastern",
-    workload: "8 / 15",
-    workloadPct: 53,
-    workloadColor: "bg-primary",
-    leadTime: "12.5 Days",
-    success: "92%",
-    successClass: "text-green-600",
-  },
-  {
-    name: "Summit Asset Liquidators",
-    license: "LIC-UG-2023-0892",
-    status: "Expiring Soon",
-    statusClass: "bg-yellow-100 text-yellow-800",
-    expiry: "Feb 28, 2024",
-    expiryClass: "text-secondary font-bold",
-    region: "Western, Northern",
-    workload: "14 / 15",
-    workloadPct: 93,
-    workloadColor: "bg-secondary",
-    leadTime: "18.2 Days",
-    success: "74%",
-    successClass: "text-on-surface-variant",
-  },
-  {
-    name: "Nile Delta Auctions",
-    license: "LIC-UG-2022-1104",
-    status: "Expired",
-    statusClass: "bg-red-100 text-red-800",
-    expiry: "Dec 31, 2023",
-    expiryClass: "text-error",
-    region: "Northern",
-    workload: "0 / 15",
-    workloadPct: 0,
-    workloadColor: "bg-error",
-    leadTime: "22.0 Days",
-    success: "61%",
-    successClass: "text-on-surface-variant",
-  },
-  {
-    name: "Equity Link Bailiffs",
-    license: "LIC-UG-2024-0341",
-    status: "Valid",
-    statusClass: "bg-green-100 text-green-800",
-    expiry: "Nov 05, 2025",
-    expiryClass: "",
-    region: "Central",
-    workload: "3 / 15",
-    workloadPct: 20,
-    workloadColor: "bg-primary",
-    leadTime: "9.8 Days",
-    success: "96%",
-    successClass: "text-green-600",
-  },
-];
-
 function AuctioneerPanel() {
-  const [addAuctioneerOpen, setAddAuctioneerOpen] = useState(false);
-  const [importOpen, setImportOpen] = useState(false);
-  const [exportOpen, setExportOpen] = useState(false);
+  const [items, setItems] = useState<any[]>([]);
+  const [query, setQuery] = useState("");
+  const [formOpen, setFormOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState(emptyForm);
 
-  return (
-    <AppShell searchPlaceholder="Search by Firm Name or License...">
-      <div className="flex items-end justify-between">
-        <div>
-          <h3 className="text-headline-md text-primary">Licensed Auctioneer Directory</h3>
-          <p className="mt-1 text-body-md text-on-surface-variant">
-            Manage and allocate asset recovery cases to verified third-party partners.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <button className="flex items-center gap-2 rounded-lg border border-primary px-4 py-2 text-label-bold text-primary transition-colors hover:bg-surface-container-low" onClick={() => setImportOpen(true)}>
-            <Icon name="upload_file" className="text-[18px]" />
-            Import Auctioneers
-          </button>
-          <button className="flex items-center gap-2 rounded-lg border border-outline-variant px-4 py-2 text-label-bold text-primary transition-colors hover:bg-surface-container-low" onClick={() => setExportOpen(true)}>
-            <Icon name="download" className="text-[18px]" />
-            Export Directory
-          </button>
-          <button className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-label-bold text-on-primary transition-opacity hover:opacity-90" onClick={() => setAddAuctioneerOpen(true)}>
-            <Icon name="add" className="text-[18px]" />
-            Add Auctioneer
-          </button>
-        </div>
-      </div>
+  const load = () => Api.get("/api/auctioneers/?ordering=company_name").then((value) => setItems(list(value)));
+  useEffect(() => { load(); }, []);
+  const shown = items.filter((item) => `${item.company_name} ${item.license_number} ${item.region}`.toLowerCase().includes(query.toLowerCase()));
+  const expiring = items.filter((item) => new Date(item.license_expiry).getTime() - Date.now() < 30 * 86_400_000).length;
 
-      <div className="grid grid-cols-1 gap-md md:grid-cols-4">
-        <div className="flex flex-col gap-2 rounded-lg border border-outline-variant bg-surface-container-lowest p-md">
-          <span className="text-label-bold uppercase text-on-surface-variant">Total Partners</span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-display-lg text-primary">124</span>
-            <span className="text-xs font-bold text-green-600">+4 this month</span>
-          </div>
-        </div>
-        <div className="flex flex-col gap-2 rounded-lg border border-outline-variant bg-surface-container-lowest p-md">
-          <span className="text-label-bold uppercase text-on-surface-variant">Avg. Success Rate</span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-display-lg text-primary">78.4%</span>
-            <span className="text-xs font-bold text-on-surface-variant">Industry: 72%</span>
-          </div>
-        </div>
-        <div className="flex flex-col gap-2 rounded-lg border border-outline-variant bg-surface-container-lowest p-md">
-          <span className="text-label-bold uppercase text-on-surface-variant">Active Cases</span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-display-lg text-primary">412</span>
-            <span className="text-xs font-bold text-secondary">85% Capacity</span>
-          </div>
-        </div>
-        <div className="flex flex-col gap-2 rounded-lg border border-outline-variant bg-surface-container-lowest p-md">
-          <span className="text-label-bold uppercase text-on-surface-variant">Avg. Lead Time</span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-display-lg text-primary">14.2d</span>
-            <span className="text-xs font-bold text-green-600">-1.2d improvement</span>
-          </div>
-        </div>
-      </div>
+  async function saveAuctioneer() {
+    setSaving(true);
+    try {
+      await Api.post("/api/auctioneers/", form);
+      setForm(emptyForm);
+      setFormOpen(false);
+      await load();
+    } finally { setSaving(false); }
+  }
 
-      <div className="flex flex-col overflow-hidden rounded-lg border border-outline-variant bg-surface-container-lowest">
-        <div className="flex flex-wrap items-center gap-lg border-b border-outline-variant bg-surface-container-low/50 p-4">
-          <div className="flex flex-col gap-1">
-            <label className="ml-1 text-[10px] font-bold uppercase text-on-surface-variant">
-              Region Coverage
-            </label>
-            <select className="min-w-[160px] rounded border-outline-variant bg-surface-container-lowest px-3 py-1 text-body-sm">
-              <option>All Regions</option>
-              <option>Central Region</option>
-              <option>Western Region</option>
-              <option>Northern Region</option>
-              <option>Eastern Region</option>
-            </select>
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="ml-1 text-[10px] font-bold uppercase text-on-surface-variant">
-              License Status
-            </label>
-            <select className="min-w-[160px] rounded border-outline-variant bg-surface-container-lowest px-3 py-1 text-body-sm">
-              <option>Any Status</option>
-              <option>Valid</option>
-              <option>Expiring Soon</option>
-              <option>Expired</option>
-            </select>
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="ml-1 text-[10px] font-bold uppercase text-on-surface-variant">
-              Capacity
-            </label>
-            <select className="min-w-[160px] rounded border-outline-variant bg-surface-container-lowest px-3 py-1 text-body-sm">
-              <option>Show All</option>
-              <option>Has Capacity</option>
-              <option>At Limit</option>
-            </select>
-          </div>
-          <button className="mt-4 flex items-center gap-1 text-label-bold text-primary hover:underline">
-            Reset Filters
-          </button>
-        </div>
+  function exportRows() {
+    return shown.map((item) => [item.company_name, item.contact_person, item.license_number, item.region, item.license_expiry, item.current_workload, item.status ? "Active" : "Inactive"]);
+  }
+  function exportCsv(extension = "csv") {
+    const rows = [["Firm", "Contact", "Licence", "Region", "Licence expiry", "Workload", "Status"], ...exportRows()];
+    const content = rows.map((row) => row.map((value) => `"${String(value ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([content], { type: "text/csv;charset=utf-8" }));
+    link.download = `auctioneers-${new Date().toISOString().slice(0, 10)}.${extension}`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+  function exportPdf() {
+    const popup = window.open("", "_blank", "noopener,noreferrer");
+    if (!popup) return;
+    const rows = exportRows().map((row) => `<tr>${row.map((value) => `<td>${String(value ?? "")}</td>`).join("")}</tr>`).join("");
+    popup.document.write(`<html><head><title>Auctioneer directory</title><style>table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#eee}</style></head><body><h1>Auctioneer Directory</h1><table><thead><tr><th>Firm</th><th>Contact</th><th>Licence</th><th>Region</th><th>Licence expiry</th><th>Workload</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);
+    popup.document.close(); popup.print();
+  }
 
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left">
-            <thead>
-              <tr className="bg-surface-container text-label-bold uppercase tracking-wider text-on-surface-variant">
-                <th className="border-b border-outline-variant px-6 py-4">Firm Name / License</th>
-                <th className="border-b border-outline-variant px-6 py-4">Status</th>
-                <th className="border-b border-outline-variant px-6 py-4">Expiry Date</th>
-                <th className="border-b border-outline-variant px-6 py-4 text-center">Region</th>
-                <th className="border-b border-outline-variant px-6 py-4 text-center">Workload</th>
-                <th className="border-b border-outline-variant px-6 py-4 text-right">Lead Time</th>
-                <th className="border-b border-outline-variant px-6 py-4 text-right">Success</th>
-                <th className="border-b border-outline-variant px-6 py-4" />
-              </tr>
-            </thead>
-            <tbody className="text-body-sm">
-              {auctioneers.map((a) => (
-                <tr
-                  key={a.license}
-                  className="group transition-colors odd:bg-surface-container-lowest even:bg-surface-container-low/40 hover:bg-surface-container-low"
-                >
-                  <td className="border-b border-outline-variant px-6 py-4">
-                    <div className="flex flex-col">
-                      <span className="font-bold text-primary">{a.name}</span>
-                      <span className="text-[11px] font-medium text-on-surface-variant">
-                        {a.license}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="border-b border-outline-variant px-6 py-4">
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold uppercase ${a.statusClass}`}>
-                      {a.status}
-                    </span>
-                  </td>
-                  <td className={`border-b border-outline-variant px-6 py-4 text-mono-data ${a.expiryClass}`}>
-                    {a.expiry}
-                  </td>
-                  <td className="border-b border-outline-variant px-6 py-4 text-center">{a.region}</td>
-                  <td className="border-b border-outline-variant px-6 py-4">
-                    <div className="flex flex-col items-center gap-1">
-                      <span className={`font-bold ${a.workloadPct === 0 ? "text-error" : ""}`}>
-                        {a.workload}
-                      </span>
-                      <div className="h-1.5 w-20 overflow-hidden rounded-full bg-surface-container">
-                        <div
-                          className={`h-full ${a.workloadColor}`}
-                          style={{ width: `${a.workloadPct}%` }}
-                        />
-                      </div>
-                    </div>
-                  </td>
-                  <td className="border-b border-outline-variant px-6 py-4 text-right text-mono-data">
-                    {a.leadTime}
-                  </td>
-                  <td className={`border-b border-outline-variant px-6 py-4 text-right font-bold ${a.successClass}`}>
-                    {a.success}
-                  </td>
-                  <td className="border-b border-outline-variant px-6 py-4 text-right">
-                    <button className="text-on-surface-variant opacity-0 transition-colors group-hover:opacity-100 hover:text-primary">
-                      <Icon name="edit" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="flex items-center justify-between bg-surface-container-lowest p-4">
-          <span className="text-body-sm text-on-surface-variant">Showing 1 to 4 of 124 auctioneers</span>
-          <div className="flex gap-2">
-            <button
-              disabled
-              className="rounded border border-outline-variant p-2 transition-colors hover:bg-surface-container disabled:opacity-50"
-            >
-              <Icon name="chevron_left" className="text-sm" />
-            </button>
-            <button className="rounded bg-primary px-3 py-1 text-label-bold text-on-primary">1</button>
-            <button className="rounded border border-outline-variant px-3 py-1 text-label-bold text-on-surface-variant hover:bg-surface-container">
-              2
-            </button>
-            <button className="rounded border border-outline-variant px-3 py-1 text-label-bold text-on-surface-variant hover:bg-surface-container">
-              3
-            </button>
-            <button className="rounded border border-outline-variant p-2 transition-colors hover:bg-surface-container">
-              <Icon name="chevron_right" className="text-sm" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-lg lg:grid-cols-3">
-        <div className="rounded-lg border border-outline-variant bg-surface-container-lowest p-lg lg:col-span-2">
-          <div className="mb-6 flex items-center justify-between">
-            <h4 className="text-title-lg text-primary">Regional Workload Distribution</h4>
-            <span className="text-xs font-medium text-on-surface-variant">Live Data: Updated 2 mins ago</span>
-          </div>
-          <div className="relative flex h-64 items-center justify-center overflow-hidden rounded bg-surface-container-low">
-            <div
-              className="absolute inset-0 opacity-10"
-              style={{
-                backgroundImage: "radial-gradient(#00A0DF 1px, transparent 1px)",
-                backgroundSize: "20px 20px",
-              }}
-            />
-            <div className="relative z-10 grid h-full w-full grid-cols-4 gap-4 p-4">
-              <div className="flex items-end rounded border border-primary/40 bg-primary/20 p-2">
-                <span className="text-[10px] font-bold text-primary">CENTRAL: 184 Cases</span>
-              </div>
-              <div className="mt-auto flex h-[60%] items-end rounded border border-secondary/40 bg-secondary/20 p-2">
-                <span className="text-[10px] font-bold text-secondary">WEST: 92 Cases</span>
-              </div>
-              <div className="mt-auto flex h-[40%] items-end rounded border border-primary/20 bg-primary/10 p-2">
-                <span className="text-[10px] font-bold text-primary">EAST: 68 Cases</span>
-              </div>
-              <div className="mt-auto flex h-[45%] items-end rounded border border-primary/20 bg-primary/10 p-2">
-                <span className="text-[10px] font-bold text-primary">NORTH: 68 Cases</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex h-full flex-col rounded-lg border border-outline-variant bg-surface-container-lowest p-lg">
-          <h4 className="mb-4 text-title-lg text-primary">Recent Audit Actions</h4>
-          <div className="flex-grow space-y-4 overflow-y-auto">
-            <div className="flex gap-3 border-b border-outline-variant/30 pb-3">
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-surface-container">
-                <Icon name="person_add" className="text-[16px]" />
-              </div>
-              <div>
-                <p className="text-body-sm font-bold leading-tight text-primary">New Partner Onboarded</p>
-                <p className="mt-0.5 text-[11px] text-on-surface-variant">
-                  Quick-Exit Recoveries Ltd added to Central Region Panel.
-                </p>
-                <span className="text-[10px] font-medium text-on-surface-variant opacity-60">
-                  Today, 09:42 AM • J. Doe
-                </span>
-              </div>
-            </div>
-            <div className="flex gap-3 border-b border-outline-variant/30 pb-3">
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-error-container">
-                <Icon name="warning" className="text-[16px] text-error" />
-              </div>
-              <div>
-                <p className="text-body-sm font-bold leading-tight text-primary">License Expiry Warning</p>
-                <p className="mt-0.5 text-[11px] text-on-surface-variant">
-                  Summit Asset Liquidators license expires in 12 days.
-                </p>
-                <span className="text-[10px] font-medium text-on-surface-variant opacity-60">
-                  Yesterday, 04:15 PM • System
-                </span>
-              </div>
-            </div>
-            <div className="flex gap-3 pb-3">
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-surface-container">
-                <Icon name="edit" className="text-[16px]" />
-              </div>
-              <div>
-                <p className="text-body-sm font-bold leading-tight text-primary">Profile Updated</p>
-                <p className="mt-0.5 text-[11px] text-on-surface-variant">
-                  Contact information updated for Nile Delta Auctions.
-                </p>
-                <span className="text-[10px] font-medium text-on-surface-variant opacity-60">
-                  12 Feb, 11:20 AM • S. Mukasa
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="fixed bottom-xl right-xl z-50">
-        <button className="group relative flex h-14 w-14 items-center justify-center rounded-full bg-secondary-container text-on-secondary-container shadow-lg transition-transform hover:scale-105 active:scale-95">
-          <Icon name="assignment_add" className="text-2xl" />
-          <span className="absolute right-full mr-4 whitespace-nowrap rounded bg-primary px-3 py-1.5 text-xs text-on-primary opacity-0 transition-opacity group-hover:opacity-100">
-            Quick Case Allocation
-          </span>
-        </button>
-      </div>
-
-      <Modal
-        open={addAuctioneerOpen}
-        onClose={() => setAddAuctioneerOpen(false)}
-        title="Add New Auctioneer"
-        subtitle="Register a new auctioneer partner firm to the panel"
-        icon="business"
-        tone="primary"
-        size="lg"
-        footer={
-          <div className="flex justify-between gap-3">
-            <button className="px-md py-2 border border-outline-variant rounded-lg text-on-surface text-label-bold hover:bg-surface transition-colors" onClick={() => setAddAuctioneerOpen(false)}>
-              Cancel
-            </button>
-            <div className="flex gap-2">
-              <button className="px-md py-2 border border-outline-variant rounded-lg text-on-surface text-label-bold hover:bg-surface transition-colors">
-                Save Draft
-              </button>
-              <button className="px-md py-2 bg-primary text-on-primary rounded-lg text-label-bold hover:bg-primary-container transition-colors shadow-md">
-                Register Auctioneer
-              </button>
-            </div>
-          </div>
-        }
-      >
-        <div className="space-y-4">
-          <div>
-            <label className="text-label-bold text-on-surface block mb-2">Firm Legal Name</label>
-            <input type="text" className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Registered business name" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-label-bold text-on-surface block mb-2">License Number</label>
-              <input type="text" className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="e.g., LIC-UG-2024-0012" />
-            </div>
-            <div>
-              <label className="text-label-bold text-on-surface block mb-2">URA Registration</label>
-              <input type="text" className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="URA number" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-label-bold text-on-surface block mb-2">License Expiry Date</label>
-              <input type="date" className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent" />
-            </div>
-            <div>
-              <label className="text-label-bold text-on-surface block mb-2">Primary Contact Person</label>
-              <input type="text" className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Full name" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-label-bold text-on-surface block mb-2">Contact Email</label>
-              <input type="email" className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="email@firm.com" />
-            </div>
-            <div>
-              <label className="text-label-bold text-on-surface block mb-2">Contact Phone</label>
-              <input type="tel" className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="+256..." />
-            </div>
-          </div>
-          <div>
-            <label className="text-label-bold text-on-surface block mb-2">Region Coverage (Select All Applicable)</label>
-            <div className="grid grid-cols-2 gap-2">
-              {["Central Region", "Western Region", "Northern Region", "Eastern Region"].map((region) => (
-                <label key={region} className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" className="rounded border-outline-variant" />
-                  <span className="text-body-sm text-on-surface">{region}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-          <div>
-            <label className="text-label-bold text-on-surface block mb-2">Maximum Caseload Capacity</label>
-            <input type="number" className="w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="e.g., 15" min="1" />
-          </div>
-          <div>
-            <label className="text-label-bold text-on-surface block mb-2">Upload License Document</label>
-            <div className="border-2 border-dashed border-outline-variant rounded-lg p-6 text-center hover:bg-primary/5 transition-colors cursor-pointer">
-              <Icon name="cloud_upload" className="mx-auto text-2xl text-primary mb-2" />
-              <p className="text-body-sm text-on-surface-variant">Click to upload or drag and drop</p>
-              <p className="text-[10px] text-outline mt-1">PDF, JPG or PNG (max. 5MB)</p>
-            </div>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal
-        open={importOpen}
-        onClose={() => setImportOpen(false)}
-        title="Import Auctioneer Firms"
-        subtitle="Upload one or more firm data files and bring structured auctioneer records into the panel."
-        icon="upload_file"
-        tone="secondary"
-        size="lg"
-        footer={
-          <div className="flex justify-between gap-3">
-            <button className="px-md py-2 border border-outline-variant rounded-lg text-on-surface text-label-bold hover:bg-surface transition-colors" onClick={() => setImportOpen(false)}>
-              Cancel
-            </button>
-            <div className="flex gap-2">
-              <button className="px-md py-2 border border-outline-variant rounded-lg text-on-surface text-label-bold hover:bg-surface transition-colors">
-                Review File
-              </button>
-              <button className="px-md py-2 bg-primary text-on-primary rounded-lg text-label-bold hover:bg-primary-container transition-colors shadow-md">
-                Import Now
-              </button>
-            </div>
-          </div>
-        }
-      >
-        <div className="space-y-4">
-          <div className="rounded-lg border border-outline-variant bg-surface-container-low p-4">
-            <p className="text-body-sm text-on-surface-variant">
-              Multiple uploads are supported. Accepted formats: CSV, XLSX, JSON.
-            </p>
-            <p className="text-[10px] text-outline mt-2">
-              Files are validated against existing license numbers and merged into the active auctioneer directory.
-            </p>
-          </div>
-          <div>
-            <label className="text-label-bold text-on-surface block mb-2">Select files to import</label>
-            <input type="file" multiple accept=".csv,.xlsx,.json" className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-body-md" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-label-bold text-on-surface mb-2">Import strategy</p>
-              <label className="flex items-center gap-2 text-body-sm">
-                <input type="radio" name="importMode" defaultChecked className="h-4 w-4 text-primary" />
-                <span>Merge with existing records</span>
-              </label>
-              <label className="flex items-center gap-2 text-body-sm mt-2">
-                <input type="radio" name="importMode" className="h-4 w-4 text-primary" />
-                <span>Create new records only</span>
-              </label>
-            </div>
-            <div>
-              <p className="text-label-bold text-on-surface mb-2">Validation options</p>
-              <label className="flex items-center gap-2 text-body-sm">
-                <input type="checkbox" className="h-4 w-4 text-primary" />
-                <span>Skip rows with invalid data</span>
-              </label>
-              <label className="flex items-center gap-2 text-body-sm mt-2">
-                <input type="checkbox" className="h-4 w-4 text-primary" />
-                <span>Send summary to compliance inbox</span>
-              </label>
-            </div>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal
-        open={exportOpen}
-        onClose={() => setExportOpen(false)}
-        title="Export Auctioneer Directory"
-        subtitle="Download the current auctioneer roster or filtered selection for external reporting."
-        icon="download"
-        tone="primary"
-        size="lg"
-        footer={
-          <div className="flex justify-between gap-3">
-            <button className="px-md py-2 border border-outline-variant rounded-lg text-on-surface text-label-bold hover:bg-surface transition-colors" onClick={() => setExportOpen(false)}>
-              Cancel
-            </button>
-            <div className="flex gap-2">
-              <button className="px-md py-2 border border-outline-variant rounded-lg text-on-surface text-label-bold hover:bg-surface transition-colors">
-                Preview
-              </button>
-              <button className="px-md py-2 bg-primary text-on-primary rounded-lg text-label-bold hover:bg-primary-container transition-colors shadow-md">
-                Export CSV
-              </button>
-            </div>
-          </div>
-        }
-      >
-        <div className="space-y-4">
-          <div>
-            <p className="text-body-sm text-on-surface-variant mb-3">
-              Select the export scope and file type for the auctioneer panel data.
-            </p>
-            <div className="grid gap-3">
-              <label className="flex items-center gap-3 rounded-lg border border-outline-variant p-3">
-                <input type="radio" name="exportScope" defaultChecked className="h-4 w-4 text-primary" />
-                <span className="text-body-sm">Current view</span>
-              </label>
-              <label className="flex items-center gap-3 rounded-lg border border-outline-variant p-3">
-                <input type="radio" name="exportScope" className="h-4 w-4 text-primary" />
-                <span className="text-body-sm">Full directory</span>
-              </label>
-              <label className="flex items-center gap-3 rounded-lg border border-outline-variant p-3">
-                <input type="radio" name="exportScope" className="h-4 w-4 text-primary" />
-                <span className="text-body-sm">Compliance audit package</span>
-              </label>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {[
-              { label: "CSV", value: "csv" },
-              { label: "XLSX", value: "xlsx" },
-              { label: "PDF", value: "pdf" },
-            ].map((option) => (
-              <label key={option.value} className="flex items-center gap-2 rounded-lg border border-outline-variant p-3 cursor-pointer">
-                <input type="radio" name="exportType" value={option.value} className="h-4 w-4 text-primary" />
-                <span className="text-body-sm">{option.label}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-      </Modal>
-    </AppShell>
-  );
+  return <AppShell searchPlaceholder="Search by firm name or licence...">
+    <div className="flex flex-wrap items-start justify-between gap-md"><div><h1 className="text-headline-md text-primary">Licensed Auctioneer Directory</h1><p className="text-on-surface-variant">Live partner records from the AAAS database.</p></div><div className="flex flex-wrap gap-sm"><Button variant="outline" icon="table_view" onClick={() => exportCsv("xls")}>Excel</Button><Button variant="outline" icon="picture_as_pdf" onClick={exportPdf}>PDF</Button><Button variant="outline" icon="download" onClick={() => exportCsv("csv")}>CSV</Button><Button icon="add" onClick={() => setFormOpen(true)}>Add auctioneer</Button></div></div>
+    <div className="mt-lg grid grid-cols-1 gap-md md:grid-cols-4"><Stat label="Total partners" value={items.length}/><Stat label="Active partners" value={items.filter((item) => item.status).length}/><Stat label="Active cases" value={items.reduce((sum, item) => sum + Number(item.current_workload || 0), 0)}/><Stat label="Licence alerts" value={expiring}/></div>
+    <section className="mt-lg overflow-hidden rounded-xl border border-outline-variant"><div className="p-md"><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search firm, licence, or region" className="w-full rounded border p-2"/></div><table className="w-full text-left"><thead className="bg-surface-container"><tr><th className="p-md">FIRM</th><th>LICENCE</th><th>REGION</th><th>EXPIRY</th><th>WORKLOAD</th><th>STATUS</th></tr></thead><tbody>{shown.map((item) => { const expired = new Date(item.license_expiry) < new Date(); return <tr className="border-t" key={item.id}><td className="p-md font-bold">{item.company_name}<div className="text-xs text-on-surface-variant">{item.contact_person}</div></td><td>{item.license_number}</td><td>{item.region}</td><td>{new Date(item.license_expiry).toLocaleDateString()}</td><td>{item.current_workload}</td><td className={item.status && !expired ? "text-secondary" : "text-error"}>{item.status && !expired ? "Active" : "Unavailable"}</td></tr>; })}{!shown.length ? <tr><td colSpan={6} className="p-lg text-center">No auctioneers found.</td></tr> : null}</tbody></table></section>
+    <Modal open={formOpen} onClose={() => setFormOpen(false)} title="Add auctioneer" subtitle="Create a new panel partner." icon="gavel" footer={<><Button variant="outline" onClick={() => setFormOpen(false)}>Cancel</Button><Button disabled={saving} onClick={saveAuctioneer}>{saving ? "Saving..." : "Save auctioneer"}</Button></>}><div className="grid grid-cols-1 gap-md sm:grid-cols-2">{(["company_name", "contact_person", "phone_number", "email", "license_number", "license_expiry", "office_address"] as const).map((field) => <label key={field} className={field === "office_address" ? "sm:col-span-2" : ""}><span className="text-label-bold capitalize">{field.replaceAll("_", " ")}</span><input required type={field === "license_expiry" ? "date" : field === "email" ? "email" : "text"} value={form[field]} onChange={(event) => setForm({ ...form, [field]: event.target.value })} className="mt-1 w-full rounded border p-2"/></label>)}<label><span className="text-label-bold">Region</span><select value={form.region} onChange={(event) => setForm({ ...form, region: event.target.value })} className="mt-1 w-full rounded border p-2">{["Central", "Eastern", "Northern", "Western"].map((region) => <option key={region}>{region}</option>)}</select></label></div></Modal>
+  </AppShell>;
 }
+function Stat({ label, value }: { label: string; value: number }) { return <div className="rounded-xl border p-md"><p className="text-label-bold uppercase">{label}</p><p className="text-display-lg text-primary">{value}</p></div>; }
