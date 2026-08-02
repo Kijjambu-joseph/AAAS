@@ -262,9 +262,39 @@ function AuctioneerPanel() {
                     {a.success}
                   </td>
                   <td className="border-b border-outline-variant px-6 py-4 text-right">
-                    <button className="text-on-surface-variant opacity-0 transition-colors group-hover:opacity-100 hover:text-primary">
-                      <Icon name="edit" />
-                    </button>
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => viewPerformance(a)}
+                        className="rounded-lg border border-outline-variant px-3 py-2 text-[11px] font-bold text-primary hover:bg-surface-container-lowest"
+                      >
+                        Metrics
+                      </button>
+                      {a.is_active ? (
+                        <button
+                          type="button"
+                          onClick={() => openSuspendDialog(a)}
+                          className="rounded-lg border border-error/30 bg-error/10 px-3 py-2 text-[11px] font-bold text-error hover:bg-error/20"
+                        >
+                          Suspend
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleActivate(a)}
+                          className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-[11px] font-bold text-primary hover:bg-primary/20"
+                        >
+                          Activate
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => openWorkloadDialog(a)}
+                        className="rounded-lg border border-outline-variant px-3 py-2 text-[11px] font-bold text-primary hover:bg-surface-container-lowest"
+                      >
+                        Workload
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -547,6 +577,132 @@ function AuctioneerPanel() {
                 <span className="text-body-sm">{option.label}</span>
               </label>
             ))}
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={performanceModalOpen}
+        onClose={() => setPerformanceModalOpen(false)}
+        title="Auctioneer Performance Metrics"
+        subtitle={selectedAuctioneer ? `Metrics for ${selectedAuctioneer.company_name}` : ""}
+        icon="insights"
+        tone="secondary"
+        size="md"
+        footer={
+          <button className="px-md py-2 bg-primary text-on-primary rounded-lg text-label-bold hover:bg-primary-container transition-colors" onClick={() => setPerformanceModalOpen(false)}>
+            Close
+          </button>
+        }
+      >
+        {actions ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <span className="text-label-bold text-on-surface-variant">Total Allocations</span>
+                <p className="text-body-lg text-primary">{actions.total_allocations}</p>
+              </div>
+              <div>
+                <span className="text-label-bold text-on-surface-variant">Workload</span>
+                <p className="text-body-lg text-primary">{actions.current_workload} / {actions.maximum_caseload}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <span className="text-label-bold text-on-surface-variant">Completion Rate</span>
+                <p className="text-body-lg text-primary">{actions.completion_rate}%</p>
+              </div>
+              <div>
+                <span className="text-label-bold text-on-surface-variant">Pending Allocations</span>
+                <p className="text-body-lg text-primary">{actions.pending}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <span className="text-label-bold text-on-surface-variant">Completed</span>
+                <p className="text-body-lg text-primary">{actions.completed}</p>
+              </div>
+              <div>
+                <span className="text-label-bold text-on-surface-variant">In Progress</span>
+                <p className="text-body-lg text-primary">{actions.in_progress}</p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <p className="text-body-md text-on-surface-variant">Loading performance metrics...</p>
+        )}
+      </Modal>
+
+      <Modal
+        open={suspendModalOpen}
+        onClose={() => setSuspendModalOpen(false)}
+        title="Suspend Auctioneer"
+        subtitle={selectedAuctioneer ? `Suspend ${selectedAuctioneer.company_name}` : ""}
+        icon="pause_circle"
+        tone="error"
+        size="sm"
+        footer={
+          <div className="flex justify-end gap-3">
+            <button className="px-md py-2 border border-outline-variant rounded-lg text-on-surface text-label-bold hover:bg-surface transition-colors" onClick={() => setSuspendModalOpen(false)}>
+              Cancel
+            </button>
+            <button className="px-md py-2 bg-error text-on-error rounded-lg text-label-bold hover:bg-error/90 transition-colors" onClick={handleSuspend}>
+              Suspend
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-body-sm text-on-surface-variant">
+            Suspending an auctioneer will prevent them from receiving new auto-allocations until reactivated.
+          </p>
+          <label className="text-label-bold text-on-surface block">Reason</label>
+          <textarea
+            value={suspendReason}
+            onChange={(e) => setSuspendReason(e.target.value)}
+            className="w-full min-h-[120px] rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-body-md focus:ring-2 focus:ring-error/50 focus:border-transparent"
+            placeholder="Enter a reason for suspension"
+          />
+        </div>
+      </Modal>
+
+      <Modal
+        open={workloadModalOpen}
+        onClose={() => setWorkloadModalOpen(false)}
+        title="Update Workload"
+        subtitle={selectedAuctioneer ? `Adjust capacity for ${selectedAuctioneer.company_name}` : ""}
+        icon="bar_chart"
+        tone="primary"
+        size="sm"
+        footer={
+          <div className="flex justify-end gap-3">
+            <button className="px-md py-2 border border-outline-variant rounded-lg text-on-surface text-label-bold hover:bg-surface transition-colors" onClick={() => setWorkloadModalOpen(false)}>
+              Cancel
+            </button>
+            <button className="px-md py-2 bg-primary text-on-primary rounded-lg text-label-bold hover:bg-primary-container transition-colors" onClick={handleWorkloadUpdate}>
+              Save
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="text-label-bold text-on-surface block mb-2">Current Workload</label>
+            <input
+              value={newWorkload.current}
+              onChange={(e) => setNewWorkload({ ...newWorkload, current: Number(e.target.value) })}
+              type="number"
+              className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-body-md focus:ring-2 focus:ring-primary focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label className="text-label-bold text-on-surface block mb-2">Maximum Caseload</label>
+            <input
+              value={newWorkload.max}
+              onChange={(e) => setNewWorkload({ ...newWorkload, max: Number(e.target.value) })}
+              type="number"
+              className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-body-md focus:ring-2 focus:ring-primary focus:border-transparent"
+            />
           </div>
         </div>
       </Modal>
