@@ -9,7 +9,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 
-from .models import RecoveryCase, Auctioneer, Allocation
+from .models import RecoveryCase, Auctioneer, Allocation, TransactionLimit
 from .repositories import AllocationRepository, AuctioneerRepository, NotificationRepository
 from .allocation_engine import (
     AllocationStrategyType,

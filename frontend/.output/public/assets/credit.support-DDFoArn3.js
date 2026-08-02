@@ -1,0 +1,1 @@
+import{o as e}from"./index-Ck35WO-3.js";import{t}from"./SupportPage-C0DVE0d4.js";var n=e(),r=()=>(0,n.jsx)(t,{role:`credit-officer`});export{r as component};
