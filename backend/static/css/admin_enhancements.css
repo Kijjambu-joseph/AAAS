@@ -1,0 +1,492 @@
+/* Centenary Bank Admin Dashboard - Custom Styling */
+
+/* Color scheme */
+:root {
+    --cb-primary: #1e40af;  /* Bank Blue */
+    --cb-secondary: #0369a1;
+    --cb-accent: #f59e0b;   /* Gold */
+    --cb-dark: #111827;
+    --cb-light: #f3f4f6;
+    --cb-success: #10b981;
+    --cb-danger: #ef4444;
+    --cb-warning: #f59e0b;
+    --cb-info: #3b82f6;
+}
+
+/* Main content area styling */
+body.django-admin-site {
+    background-color: #f9fafb;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Header customization */
+#header {
+    background: linear-gradient(135deg, var(--cb-primary) 0%, var(--cb-secondary) 100%);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#header h1, #header h1 a {
+    color: white;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+#header a {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+#header a:hover {
+    color: rgba(255, 255, 255, 1);
+}
+
+/* User info section */
+#user-tools {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 12px 20px;
+}
+
+#user-tools a {
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+#user-tools a:hover {
+    color: var(--cb-accent);
+}
+
+/* Sidebar customization */
+#sidebar {
+    background: linear-gradient(180deg, var(--cb-dark) 0%, #1f2937 100%);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+}
+
+#sidebar h2 {
+    color: var(--cb-accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 12px;
+    padding: 15px 15px;
+    border-bottom: 2px solid var(--cb-primary);
+    margin-bottom: 15px;
+}
+
+#sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+#sidebar li {
+    margin: 0;
+    padding: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+#sidebar a {
+    color: rgba(255, 255, 255, 0.8);
+    display: block;
+    padding: 12px 15px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+}
+
+#sidebar a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--cb-accent);
+    border-left-color: var(--cb-accent);
+    padding-left: 18px;
+}
+
+/* Content area */
+#content {
+    background-color: #ffffff;
+    margin: 20px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+#content h1 {
+    color: var(--cb-primary);
+    font-weight: 600;
+    border-bottom: 3px solid var(--cb-accent);
+    padding-bottom: 10px;
+}
+
+/* Breadcrumbs */
+.breadcrumbs {
+    background-color: var(--cb-light);
+    padding: 12px 15px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+
+.breadcrumbs a {
+    color: var(--cb-primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.breadcrumbs a:hover {
+    text-decoration: underline;
+}
+
+/* List view styling */
+.results {
+    margin-top: 20px;
+}
+
+.results table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.results thead {
+    background-color: var(--cb-primary);
+    color: white;
+}
+
+.results thead th {
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: none;
+}
+
+.results tbody td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--cb-light);
+}
+
+.results tbody tr:hover {
+    background-color: rgba(30, 64, 175, 0.05);
+}
+
+/* Badges - System Admin */
+.badge-danger {
+    background-color: var(--cb-danger);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.badge-dark {
+    background-color: var(--cb-dark);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.badge-info {
+    background-color: var(--cb-info);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.badge-secondary {
+    background-color: #6b7280;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.badge-success {
+    background-color: var(--cb-success);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.badge-warning {
+    background-color: var(--cb-warning);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.badge-primary {
+    background-color: var(--cb-primary);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+}
+
+/* Form styling */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.form-row.form-row.label-above {
+    grid-template-columns: 1fr;
+}
+
+.fieldBox {
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 15px;
+    background-color: var(--cb-light);
+}
+
+.fieldBox h2 {
+    color: var(--cb-primary);
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 0;
+    border-bottom: 2px solid var(--cb-accent);
+    padding-bottom: 10px;
+}
+
+.fieldBox.collapse {
+    display: none;
+}
+
+.fieldBox.collapse.show {
+    display: block;
+}
+
+/* Buttons */
+.button, button, input[type="submit"], input[type="button"], a.button {
+    background-color: var(--cb-primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.button:hover, button:hover, input[type="submit"]:hover, input[type="button"]:hover, a.button:hover {
+    background-color: var(--cb-secondary);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.button.default, input[type="submit"].default {
+    background-color: var(--cb-primary);
+}
+
+.button.default:hover, input[type="submit"].default:hover {
+    background-color: var(--cb-secondary);
+}
+
+/* Links */
+a {
+    color: var(--cb-primary);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--cb-secondary);
+    text-decoration: underline;
+}
+
+/* Filter sidebar */
+.filtered #changelist-filter {
+    background-color: var(--cb-light);
+    border-radius: 6px;
+    padding: 15px;
+}
+
+#changelist-filter h2 {
+    color: var(--cb-primary);
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 15px;
+}
+
+#changelist-filter h2:first-child {
+    margin-top: 0;
+}
+
+#changelist-filter li {
+    list-style: none;
+    margin: 8px 0;
+    padding: 5px 0;
+}
+
+#changelist-filter a {
+    color: var(--cb-primary);
+    text-decoration: none;
+    display: block;
+    padding: 5px 0;
+}
+
+#changelist-filter a:hover {
+    color: var(--cb-secondary);
+    text-decoration: underline;
+}
+
+#changelist-filter li.selected a {
+    color: var(--cb-accent);
+    font-weight: 600;
+}
+
+/* Search */
+#searchbar {
+    background-color: var(--cb-light);
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+
+#searchbar input[type="text"] {
+    background-color: white;
+    border: 2px solid var(--cb-primary);
+    padding: 10px 15px;
+    border-radius: 4px;
+    width: 100%;
+    max-width: 300px;
+}
+
+#searchbar input[type="text"]:focus {
+    outline: none;
+    border-color: var(--cb-secondary);
+    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+}
+
+#searchbar input[type="submit"] {
+    background-color: var(--cb-primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+#searchbar input[type="submit"]:hover {
+    background-color: var(--cb-secondary);
+}
+
+/* Progress bar */
+.progress {
+    background-color: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+    height: 20px;
+}
+
+.progress-bar {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    transition: width 0.3s ease;
+}
+
+.progress-bar.bg-success {
+    background-color: var(--cb-success);
+}
+
+.progress-bar.bg-warning {
+    background-color: var(--cb-warning);
+}
+
+.progress-bar.bg-danger {
+    background-color: var(--cb-danger);
+}
+
+/* Dashboard cards */
+.dashboard-item {
+    background-color: white;
+    border: 1px solid var(--cb-light);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.dashboard-item:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.dashboard-item h3 {
+    color: var(--cb-primary);
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 0;
+}
+
+/* System Admin indicator */
+.system-admin-indicator {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.system-admin-indicator i {
+    font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #sidebar {
+        width: 100%;
+        height: auto;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    #searchbar input[type="text"] {
+        max-width: 100%;
+    }
+}

@@ -34,6 +34,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
 
      # Third-party Apps
+    'jazzmin',
     'rest_framework',
     'rest_framework_simplejwt',
 
@@ -129,6 +130,8 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
@@ -159,6 +162,145 @@ ALLOCATION_CONFIG = {
     "DEFAULT_STRATEGY": os.getenv("ALLOCATION_DEFAULT_STRATEGY", "automatic"),
     "HIGH_PRIORITY_LEVELS": ["High", "CRITICAL", "Critical"],
     "CRITICAL_PRIORITY_LEVELS": ["CRITICAL", "Critical"],
+}
+
+# Jazzmin Configuration
+JAZZMIN_SETTINGS = {
+    "site_title": "Centenary Bank Admin",
+    "site_header": "Centenary Bank - Allocation Management System",
+    "site_brand": "CBAS",
+    "welcome_sign": "Welcome to Centenary Bank Allocation System",
+    "copyright": "Centenary Bank Uganda Limited",
+    
+    # UI configuration
+    "show_ui_builder": True,
+    "ui_tweaks": {
+        "sidebar_disable_auto_collapse": False,
+        "account_model": "auth.user"
+    },
+    
+    # Dashboard configuration
+    "dashboard_sidebarclasses": "sidebar-dark-primary",
+    "order_with_respect_to": [
+        "my_app.bankuser",
+        "my_app.branch", 
+        "my_app.auctioneer",
+        "my_app.recoverycase",
+        "my_app.allocation",
+        "my_app.notification",
+        "my_app.auditlog",
+    ],
+    
+    # Search configuration
+    "search_model": "auth.user",
+    "user_avatar": None,
+    
+    # Navigation configuration
+    "navigation": {
+        "System Management": {
+            "icon": "fas fa-cogs",
+            "models": [
+                {
+                    "name": "bankuser",
+                    "app": "my_app",
+                    "icon": "fas fa-user-shield",
+                    "permissions": ["my_app.change_bankuser", "my_app.view_bankuser"]
+                },
+            ],
+        },
+        "Bank Administration": {
+            "icon": "fas fa-university",
+            "models": [
+                {
+                    "name": "branch",
+                    "app": "my_app",
+                    "icon": "fas fa-code-branch"
+                },
+            ],
+        },
+        "Auctioneer Management": {
+            "icon": "fas fa-gavel",
+            "models": [
+                {
+                    "name": "auctioneer",
+                    "app": "my_app",
+                    "icon": "fas fa-person-booth"
+                },
+            ],
+        },
+        "Recovery Cases": {
+            "icon": "fas fa-briefcase",
+            "models": [
+                {
+                    "name": "recoverycase",
+                    "app": "my_app",
+                    "icon": "fas fa-file-invoice"
+                },
+                {
+                    "name": "allocation",
+                    "app": "my_app",
+                    "icon": "fas fa-tasks"
+                },
+            ],
+        },
+        "System Activity": {
+            "icon": "fas fa-history",
+            "models": [
+                {
+                    "name": "notification",
+                    "app": "my_app",
+                    "icon": "fas fa-bell"
+                },
+                {
+                    "name": "auditlog",
+                    "app": "my_app",
+                    "icon": "fas fa-clipboard-list"
+                },
+            ],
+        },
+    },
+    
+    # Styling
+    "theme": {
+        "primaryColor": "#1e40af",  # Bank Blue
+        "secondaryColor": "#0369a1",
+        "accentColor": "#f59e0b",  # Gold accent
+    },
+    
+    # Icons configuration
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "auth.Group": "fas fa-users",
+        "my_app.BankUser": "fas fa-user-shield",
+        "my_app.Branch": "fas fa-code-branch",
+        "my_app.Auctioneer": "fas fa-gavel",
+        "my_app.RecoveryCase": "fas fa-briefcase",
+        "my_app.Allocation": "fas fa-tasks",
+        "my_app.Notification": "fas fa-bell",
+        "my_app.AuditLog": "fas fa-history",
+    },
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "brand_colour": "navbar-dark-primary",
+    "accent": "accent-primary",
+    "navbar": "navbar-dark-primary",
+    "sidebar": "sidebar-dark-primary",
+    "sidebar_nav_child_indent": False,
+    "sidebar_nav_compact_style": False,
+    "sidebar_disable_auto_collapse": False,
+    "body_bg": "#ecf0f5",
+    "content_padding": "10px",
+    "search_elevation": 4,
+    "navbar_padd": "10px",
+    "list_filter_dropdown": True,
+    "default_icon_parents": "fas fa-chevron-circle-right",
+    "default_icon_children": "fas fa-circle-o",
 }
 
 

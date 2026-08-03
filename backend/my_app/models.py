@@ -491,6 +491,7 @@ class BankUser(AbstractUser):
     ROLE_CHOICES = [
         ('LOAN_OFFICER', 'Loan Officer'),
         ('CREDIT_OFFICER', 'Credit Officer'),
+        ('SYSTEM_ADMIN', 'System Admin'),
         ('SUPER_ADMIN', 'Super Admin'),
     ]
 

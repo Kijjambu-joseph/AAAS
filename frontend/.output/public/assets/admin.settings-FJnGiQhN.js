@@ -1,1 +1,0 @@
-import{o as e}from"./index-Ck35WO-3.js";import{t}from"./SettingsPage-D8-rd6yM.js";var n=e(),r=()=>(0,n.jsx)(t,{role:`super-admin`});export{r as component};

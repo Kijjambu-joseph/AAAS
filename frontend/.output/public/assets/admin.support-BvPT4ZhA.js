@@ -1,0 +1,1 @@
+import{o as e}from"./index-B1iBCkTG.js";import{t}from"./SupportPage-kcEohSt_.js";var n=e(),r=()=>(0,n.jsx)(t,{role:`super-admin`});export{r as component};
