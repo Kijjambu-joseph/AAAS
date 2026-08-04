@@ -1,0 +1,23 @@
+/* Login page logo */
+.login-logo img {
+    width: 150px !important;
+    height: auto !important;
+    max-height: 150px !important;
+}
+
+
+
+/* Resize sidebar logo */
+.brand-image {
+    width: 45px !important;
+    height: 45px !important;
+    max-height: 45px !important;
+    object-fit: contain;
+    margin-left: 8px;
+}
+
+/* Hide sidebar user panel */
+.user-panel {
+    display: none !important;
+}
+

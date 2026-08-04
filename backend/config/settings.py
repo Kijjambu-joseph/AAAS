@@ -166,11 +166,16 @@ ALLOCATION_CONFIG = {
 
 # Jazzmin Configuration
 JAZZMIN_SETTINGS = {
-    "site_title": "Centenary Bank Admin",
-    "site_header": "Centenary Bank - Allocation Management System",
-    "site_brand": "CBAS",
-    "welcome_sign": "Welcome to Centenary Bank Allocation System",
+    "custom_css": "css/custom_admin.css",
+
+    "site_title": "Centenary Bank",
+    "site_header": "AUTO-ALLOCATION OF AUCTIONEERS SYSTEM",
+    "site_brand": "AAAS",
+    "welcome_sign": "Welcome to Centenary Bank",
     "copyright": "Centenary Bank Uganda Limited",
+
+    "site_logo": "images/centenary-logo.png",
+    "login_logo": "images/centenary-logo.png",
     
     # UI configuration
     "show_ui_builder": True,
