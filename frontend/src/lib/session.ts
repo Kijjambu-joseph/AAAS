@@ -1,4 +1,4 @@
-export type Role = "super-admin" | "credit-officer" | "loan-officer";
+export type Role = "credit-Officer H/O" | "loan-officer-branch" | "credit-Officer H/O";
 
 export interface SessionUser {
   role: Role;
@@ -11,22 +11,13 @@ export type DatabaseUser = {
   username: string;
   first_name: string;
   last_name: string;
-  role:
-    | "SUPER_ADMIN"
-    | "CREDIT_OFFICER"
-    | "LOAN_OFFICER"
-    | "CREDIT_OFFICER_H/O"
-    | "LOAN_OFFICER_BRANCH"
-    | "CREDIT_ADMIN";
+  role: "LOAN_OFFICER_BRANCH" | "CREDIT_OFFICER_H/O" | "SYSTEM_ADMIN";
 };
 
 const DATABASE_ROLE_MAP: Record<DatabaseUser["role"], Role> = {
-  SUPER_ADMIN: "super-admin",
-  CREDIT_OFFICER: "credit-officer",
-  "CREDIT_OFFICER_H/O": "credit-officer",
-  CREDIT_ADMIN: "credit-officer",
-  LOAN_OFFICER: "loan-officer",
-  LOAN_OFFICER_BRANCH: "loan-officer",
+  "CREDIT_OFFICER_H/O": "credit-Officer H/O",
+  "LOAN_OFFICER_BRANCH": "loan-officer-branch",
+  "SYSTEM_ADMIN": "credit-Officer H/O",
 };
 
 export function sessionUserFromDatabase(user: DatabaseUser): SessionUser {
@@ -36,31 +27,24 @@ export function sessionUserFromDatabase(user: DatabaseUser): SessionUser {
 }
 
 export const ROLE_LABEL: Record<Role, string> = {
-  "super-admin": "Super Admin",
-  "credit-officer": "Credit Officer",
-  "loan-officer": "Loan Officer",
+  "credit-Officer H/O": "Credit Officer H/O",
+  "loan-officer-branch": "Loan Officer - Branch",
 };
 
 export const AVATAR =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuCdh0izp6zCUt-68fDJqipBTdvIpFPJMVTp0LOrFoZXZyTkxTG4jhmt0ZBJciimouBhyLA7pVpOr8rTqg7tJHnzJyJwS2DvRjHP_I2EFEbSSZhCTxjQZrgHY1nv9qEz5LrkJQXbNxJBtEu_gRsufNhucDGohTWaxrdu1XxNseibvPfpP_88MwS_0ieWW3_s_FVhDnNrg_al1Hz1Sq8IAkt3YxjSh83rJ3bWrXpjD7UNJkVkCATHjXI9RBzgOlJhyI5EzJKhhZ1fPIsA";
 
 export const DEFAULT_USERS: Record<Role, SessionUser> = {
-  "super-admin": {
-    role: "super-admin",
-    name: "Kijjambu Joseph",
-    title: "Super Admin",
-    avatar: AVATAR,
-  },
-  "credit-officer": {
-    role: "credit-officer",
+  "credit-Officer H/O": {
+    role: "credit-Officer H/O",
     name: "A. Nakato",
-    title: "Credit Officer",
+    title: "Credit Officer H/O",
     avatar: AVATAR,
   },
-  "loan-officer": {
-    role: "loan-officer",
+  "loan-officer-branch": {
+    role: "loan-officer-branch",
     name: "J. Okello",
-    title: "Loan Officer",
+    title: "Loan Officer - Branch",
     avatar: AVATAR,
   },
 };
@@ -72,7 +56,7 @@ export interface NavItem {
 }
 
 export const ROLE_NAV: Record<Role, NavItem[]> = {
-  "super-admin": [
+  "credit-Officer H/O": [
     { label: "Dashboard", icon: "dashboard", to: "/admin" },
     { label: "Case Registry", icon: "inventory_2", to: "/credit/cases" },
     { label: "Auctioneer Panel", icon: "gavel", to: "/admin/auctioneers" },
@@ -81,22 +65,16 @@ export const ROLE_NAV: Record<Role, NavItem[]> = {
     { label: "Reports", icon: "assessment", to: "/admin/reports" },
     { label: "Audit Logs", icon: "history", to: "/admin/audit" },
   ],
-  "credit-officer": [
+  "loan-officer-branch": [
     { label: "Dashboard", icon: "dashboard", to: "/credit" },
     { label: "Case Registry", icon: "inventory_2", to: "/credit/cases" },
     { label: "Allocation Engine", icon: "queue", to: "/credit/allocation" },
   ],
-  "loan-officer": [
-    { label: "Dashboard", icon: "dashboard", to: "/officer" },
-    { label: "My Workspace", icon: "work", to: "/officer/workspace" },
-    { label: "Case Registry", icon: "inventory_2", to: "/credit/cases" },
-  ],
 };
 
 export const ROLE_HOME: Record<Role, string> = {
-  "super-admin": "/admin",
-  "credit-officer": "/credit",
-  "loan-officer": "/officer",
+  "credit-Officer H/O": "/admin",
+  "loan-officer-branch": "/credit",
 };
 
 const KEY = "aaas.session";
