@@ -11,13 +11,22 @@ export type DatabaseUser = {
   username: string;
   first_name: string;
   last_name: string;
-  role: "SUPER_ADMIN" | "CREDIT_OFFICER" | "LOAN_OFFICER";
+  role:
+    | "SUPER_ADMIN"
+    | "CREDIT_OFFICER"
+    | "LOAN_OFFICER"
+    | "CREDIT_OFFICER_H/O"
+    | "LOAN_OFFICER_BRANCH"
+    | "CREDIT_ADMIN";
 };
 
 const DATABASE_ROLE_MAP: Record<DatabaseUser["role"], Role> = {
   SUPER_ADMIN: "super-admin",
   CREDIT_OFFICER: "credit-officer",
+  "CREDIT_OFFICER_H/O": "credit-officer",
+  CREDIT_ADMIN: "credit-officer",
   LOAN_OFFICER: "loan-officer",
+  LOAN_OFFICER_BRANCH: "loan-officer",
 };
 
 export function sessionUserFromDatabase(user: DatabaseUser): SessionUser {

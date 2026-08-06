@@ -181,7 +181,7 @@ JAZZMIN_SETTINGS = {
     "show_ui_builder": True,
     "ui_tweaks": {
         "sidebar_disable_auto_collapse": False,
-        "account_model": "auth.user"
+        "account_model": "my_app.bankuser"
     },
     
     # Dashboard configuration
@@ -197,7 +197,7 @@ JAZZMIN_SETTINGS = {
     ],
     
     # Search configuration
-    "search_model": "auth.user",
+    "search_model": "my_app.bankuser",
     "user_avatar": None,
     
     # Navigation configuration

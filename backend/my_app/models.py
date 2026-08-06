@@ -489,12 +489,12 @@ class TransactionLimit(models.Model):
     
 class BankUser(AbstractUser):
     ROLE_CHOICES = [
-        ('LOAN_OFFICER', 'Loan Officer'),
-        ('CREDIT_OFFICER', 'Credit Officer'),
+        ('LOAN_OFFICER_BRANCH', 'Loan Officer Branch'),
+        ('CREDIT_OFFICER_H/O', 'Credit Officer H/O'),
         ('SYSTEM_ADMIN', 'System Admin'),
         ('SUPER_ADMIN', 'Super Admin'),
     ]
-
+    email = models.EmailField(max_length=254, unique=True, blank=True, null=True)
     employee_number = models.CharField(max_length=20, unique=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
@@ -507,6 +507,17 @@ class BankUser(AbstractUser):
     blank=True,
     related_name="employees"
 )
+
+    LEGACY_ROLE_MAP = {
+        'LOAN_OFFICER': 'LOAN_OFFICER_BRANCH',
+        'CREDIT_OFFICER': 'CREDIT_OFFICER_H/O',
+        'CREDIT_ADMIN': 'CREDIT_OFFICER_H/O',
+    }
+
+    def save(self, *args, **kwargs):
+        if self.role in self.LEGACY_ROLE_MAP:
+            self.role = self.LEGACY_ROLE_MAP[self.role]
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.employee_number} - {self.get_full_name()}"

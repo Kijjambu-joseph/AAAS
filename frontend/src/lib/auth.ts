@@ -26,11 +26,12 @@ export function clearAuth() {
 }
 
 export async function login(username: string, password: string) {
-  // expects SimpleJWT token endpoint at /api/token/
+  const identifier = username.trim();
+
   const res = await fetch("/api/token/", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ username: identifier, password }),
     credentials: "same-origin",
   });
   if (!res.ok) throw new Error("Invalid employee ID or password");

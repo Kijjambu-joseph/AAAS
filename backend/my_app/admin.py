@@ -1,11 +1,88 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+from django.core.exceptions import ValidationError
 from django.utils.html import format_html, mark_safe
 from .models import BankUser, Branch, Auctioneer, RecoveryCase, Allocation, Notification, AuditLog
 
 
+class BankUserCreationForm(UserCreationForm):
+    class Meta:
+        model = BankUser
+        fields = (
+            'username',
+            'email',
+            'employee_number',
+            'first_name',
+            'last_name',
+            'phone_number',
+            'role',
+            'branch',
+            'profile_picture',
+        )
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if not email:
+            raise ValidationError('Email is required for new users.')
+        return email
+
+    def clean_employee_number(self):
+        emp = self.cleaned_data.get('employee_number')
+        if not emp:
+            raise ValidationError('Employee number is required for new users.')
+        # ensure uniqueness at form validation time
+        if BankUser.objects.filter(employee_number__iexact=emp).exists():
+            raise ValidationError('Employee number already exists.')
+        return emp
+
+    def save(self, commit=True):
+        # Use the parent save to create the user and set password
+        user = super().save(commit=False)
+        # Ensure required flags and normalized role values
+        role = self.cleaned_data.get('role')
+        user.role = role
+        # Make staff/superuser decisions predictable: admins become staff
+        if role in ("SUPER_ADMIN", "SYSTEM_ADMIN"):
+            user.is_staff = True
+            user.is_superuser = True if role == "SUPER_ADMIN" else user.is_superuser
+        else:
+            # non-admins shouldn't be staff by default
+            user.is_staff = False
+            user.is_superuser = False
+
+        if commit:
+            user.save()
+            # Save many-to-many relations if any
+            self.save_m2m()
+        return user
+
+
+class BankUserChangeForm(UserChangeForm):
+    class Meta:
+        model = BankUser
+        fields = (
+            'username',
+            'email',
+            'employee_number',
+            'first_name',
+            'last_name',
+            'phone_number',
+            'role',
+            'branch',
+            'profile_picture',
+            'is_active',
+            'is_staff',
+            'is_superuser',
+            'groups',
+            'user_permissions',
+        )
+
+
 # Enhanced BankUser Admin with role-based styling
 class BankUserAdmin(UserAdmin):
+    form = BankUserChangeForm
+    add_form = BankUserCreationForm
     """Enhanced BankUser Admin with role-based styling and System Admin indicators."""
     
     fieldsets = UserAdmin.fieldsets + (
@@ -22,10 +99,15 @@ class BankUserAdmin(UserAdmin):
         }),
     )
     
-    add_fieldsets = UserAdmin.add_fieldsets + (
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('username', 'password1', 'password2'),
+        }),
         ('Bank Information', {
             'fields': (
                 'employee_number',
+                'email',
                 'phone_number',
                 'role',
                 'branch',
@@ -65,8 +147,15 @@ class BankUserAdmin(UserAdmin):
     
     def get_role_badge(self, obj):
         """Display role with color-coded badge and icon."""
-        role_display = dict(BankUser.ROLE_CHOICES).get(obj.role, 'Unknown')
-        
+        role_display = dict(BankUser.ROLE_CHOICES).get(obj.role)
+        if not role_display:
+            legacy_role_display = {
+                'LOAN_OFFICER': 'Loan Officer Branch',
+                'CREDIT_OFFICER': 'Credit Officer H/O',
+                'CREDIT_ADMIN': 'Credit Officer H/O',
+            }
+            role_display = legacy_role_display.get(obj.role, 'Unknown')
+
         if obj.role == 'SYSTEM_ADMIN':
             return format_html(
                 '<span class="badge badge-danger"><i class="fas fa-lock"></i> {}</span>',
@@ -77,9 +166,14 @@ class BankUserAdmin(UserAdmin):
                 '<span class="badge badge-dark"><i class="fas fa-crown"></i> {}</span>',
                 role_display
             )
-        elif obj.role == 'CREDIT_OFFICER':
+        elif obj.role in ('CREDIT_OFFICER_H/O', 'CREDIT_OFFICER', 'CREDIT_ADMIN'):
             return format_html(
                 '<span class="badge badge-info"><i class="fas fa-user-tie"></i> {}</span>',
+                role_display
+            )
+        elif obj.role in ('LOAN_OFFICER_BRANCH', 'LOAN_OFFICER'):
+            return format_html(
+                '<span class="badge badge-secondary"><i class="fas fa-user"></i> {}</span>',
                 role_display
             )
         else:
